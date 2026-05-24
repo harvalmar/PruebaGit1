@@ -100,13 +100,17 @@
               <div class="col-sm-6">
                 <label for="pisos" class="form-label fw-semibold">Número de pisos</label>
                 <input type="number" class="form-control" id="pisos" name="pisos"
-                       min="1" max="10" value="1" required />
+                       min="1" max="2" value="1" required />
+                <div class="form-text"><i class="bi bi-info-circle me-1"></i>Máx. 2 pisos — normativa colombiana</div>
               </div>
             </div>
 
             <!-- Aislamiento -->
             <div class="mb-3">
-              <label class="form-label fw-semibold">¿Incluir aislamiento térmico/acústico?</label>
+              <label class="form-label fw-semibold">
+                ¿Incluir aislamiento térmico/acústico?
+                <span id="label_aislamiento" class="text-muted fw-normal small">(lana de vidrio)</span>
+              </label>
               <div class="d-flex gap-3">
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="aislamiento"
@@ -131,12 +135,26 @@
             </div>
 
             <!-- Opciones LSF -->
-            <div id="opciones_lsf" class="mb-3 d-none">
-              <label class="form-label fw-semibold">Revestimiento exterior</label>
-              <select class="form-select" name="revestimiento_ext">
-                <option value="cemento">Placa cementicia (mayor durabilidad exterior)</option>
-                <option value="osb">OSB (más económico)</option>
-              </select>
+            <div id="opciones_lsf" class="d-none">
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Acabado exterior sobre fibrocemento</label>
+                <select class="form-select" name="acabado_ext">
+                  <option value="estuco">Estuco — textura lisa o rugosa</option>
+                  <option value="graniplast">Graniplast — textura acrílica proyectada</option>
+                  <option value="granimarmol">Granimármol — efecto mármol decorativo</option>
+                  <option value="vinilico">Revestimiento vinílico (vinyl siding / PVC flexible)</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Revestimiento interior</label>
+                <select class="form-select" name="rev_interior">
+                  <option value="drywall">Drywall — placa de yeso 12.5 mm</option>
+                  <option value="mdf">MDF/MDP melamínico — tipo mueble de cocina</option>
+                </select>
+              </div>
+
             </div>
 
             <div class="d-grid mt-4">
@@ -165,6 +183,8 @@
     const esLSF = document.getElementById("t_lsf").checked;
     document.getElementById("opciones_seca").classList.toggle("d-none", esLSF);
     document.getElementById("opciones_lsf").classList.toggle("d-none", !esLSF);
+    document.getElementById("label_aislamiento").textContent =
+      esLSF ? "(lana de roca)" : "(lana de vidrio)";
   }
 </script>
 </body>
