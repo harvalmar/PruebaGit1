@@ -20,42 +20,55 @@
 
 <div class="container py-5">
 
-  <!-- Encabezado del resultado -->
-  <div class="row mb-4">
-    <div class="col">
-      <div class="alert alert-primary d-flex align-items-center gap-3 mb-0">
-        <i class="bi bi-check-circle-fill fs-3"></i>
-        <div>
-          <h4 class="mb-0">{{ tecnica }}</h4>
-          <span class="small">
-            {{ area_m2 }} m² · {{ pisos }} piso{{ 's' if pisos > 1 else '' }} ·
-            {% for k, v in opciones.items() %}{{ k }}: <strong>{{ v }}</strong>{% if not loop.last %} · {% endif %}{% endfor %}
-            · Aislamiento: <strong>{{ 'Incluido' if con_aislamiento else 'No incluido' }}</strong>
-          </span>
-        </div>
-      </div>
+  <!-- Encabezado -->
+  <div class="alert alert-primary d-flex align-items-start gap-3 mb-4">
+    <i class="bi bi-check-circle-fill fs-3 mt-1"></i>
+    <div>
+      <h4 class="mb-1">{{ tecnica }}</h4>
+      <span class="small">
+        {{ area_m2 }} m² en planta · {{ pisos }} piso{{ 's' if pisos > 1 else '' }} ·
+        {% for k, v in opciones.items() %}
+          {{ k }}: <strong>{{ v }}</strong>{% if not loop.last %} · {% endif %}
+        {% endfor %}
+        · Aislamiento: <strong>{{ 'Incluido' if con_aislamiento else 'No incluido' }}</strong>
+      </span>
+      {% if info_techo %}
+      <br><span class="small">
+        Techo: <strong>{{ info_techo.tipo }}</strong>
+        {% if info_techo.pendiente != '—' %}
+          · Pendiente: <strong>{{ info_techo.pendiente }}</strong>
+          · Área real techo: <strong>{{ info_techo.area_real }} m²</strong>
+          (factor ×{{ info_techo.factor }})
+        {% endif %}
+        · EPS techo: <strong>{{ 'Sí' if info_techo.con_eps else 'No' }}</strong>
+      </span>
+      {% endif %}
     </div>
   </div>
 
   <div class="row g-4">
 
-    <!-- Desglose de ítems -->
+    <!-- Columna izquierda: tablas de desglose -->
     <div class="col-lg-7">
-      <div class="card border-0 shadow-sm h-100">
+
+      <!-- ── Tabla muros ───────────────────────────────────── -->
+      <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white border-bottom">
-          <h5 class="mb-0"><i class="bi bi-list-ul me-2 text-primary"></i>Desglose de costos directos</h5>
+          <h5 class="mb-0">
+            <i class="bi bi-columns-gap me-2 text-primary"></i>Muros — costos directos
+          </h5>
         </div>
         <div class="card-body p-0">
           <table class="table table-hover mb-0">
             <thead class="table-light">
               <tr>
                 <th>Ítem</th>
-                <th class="text-end">Costo (USD)</th>
-                <th class="text-end">%</th>
+                <th class="text-end">USD</th>
+                <th class="text-end">%&nbsp;CD</th>
               </tr>
             </thead>
             <tbody>
-              {% for item, valor in detalle.items() %}
+              {% for item, valor in detalle_muros.items() %}
               <tr>
                 <td>{{ item }}</td>
                 <td class="text-end">${{ "%.2f"|format(valor) }}</td>
@@ -67,18 +80,64 @@
             </tbody>
             <tfoot class="table-light fw-semibold">
               <tr>
-                <td>Subtotal costos directos</td>
-                <td class="text-end">${{ "%.2f"|format(resumen.costo_directo) }}</td>
-                <td class="text-end">100%</td>
+                <td>Subtotal muros</td>
+                <td class="text-end">${{ "%.2f"|format(resumen.cd_muros) }}</td>
+                <td class="text-end">
+                  {{ "%.1f"|format(resumen.cd_muros / resumen.costo_directo * 100) }}%
+                </td>
               </tr>
             </tfoot>
           </table>
         </div>
       </div>
+
+      <!-- ── Tabla techo (solo LSF) ────────────────────────── -->
+      {% if detalle_techo %}
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom">
+          <h5 class="mb-0">
+            <i class="bi bi-house-up me-2 text-success"></i>Techo — costos directos
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Ítem</th>
+                <th class="text-end">USD</th>
+                <th class="text-end">%&nbsp;CD</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item, valor in detalle_techo.items() %}
+              <tr>
+                <td>{{ item }}</td>
+                <td class="text-end">${{ "%.2f"|format(valor) }}</td>
+                <td class="text-end text-muted small">
+                  {{ "%.1f"|format(valor / resumen.costo_directo * 100) }}%
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot class="table-light fw-semibold">
+              <tr>
+                <td>Subtotal techo</td>
+                <td class="text-end">${{ "%.2f"|format(resumen.cd_techo) }}</td>
+                <td class="text-end">
+                  {{ "%.1f"|format(resumen.cd_techo / resumen.costo_directo * 100) }}%
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
     </div>
 
-    <!-- Resumen financiero -->
+    <!-- Columna derecha: resumen financiero -->
     <div class="col-lg-5">
+
       <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white border-bottom">
           <h5 class="mb-0"><i class="bi bi-receipt me-2 text-primary"></i>Resumen financiero</h5>
@@ -87,7 +146,17 @@
           <table class="table mb-0">
             <tbody>
               <tr>
-                <td>Costos directos</td>
+                <td class="text-muted small">Costos directos — muros</td>
+                <td class="text-end small">${{ "%.2f"|format(resumen.cd_muros) }}</td>
+              </tr>
+              {% if detalle_techo %}
+              <tr>
+                <td class="text-muted small">Costos directos — techo</td>
+                <td class="text-end small">${{ "%.2f"|format(resumen.cd_techo) }}</td>
+              </tr>
+              {% endif %}
+              <tr class="fw-semibold border-top">
+                <td>Total costos directos</td>
                 <td class="text-end">${{ "%.2f"|format(resumen.costo_directo) }}</td>
               </tr>
               <tr>
@@ -99,7 +168,7 @@
                 <td class="text-end">${{ "%.2f"|format(resumen.subtotal) }}</td>
               </tr>
               <tr>
-                <td>IVA (21%)</td>
+                <td>IVA (19% — Colombia)</td>
                 <td class="text-end">${{ "%.2f"|format(resumen.iva) }}</td>
               </tr>
             </tbody>
@@ -116,26 +185,26 @@
       <!-- Indicador costo/m² -->
       <div class="card border-0 shadow-sm mb-4">
         <div class="card-body text-center">
-          <div class="text-muted small mb-1">Costo por m² (total con IVA)</div>
+          <div class="text-muted small mb-1">Costo por m² construido (con IVA)</div>
           <div class="display-6 text-primary fw-bold">${{ "%.2f"|format(costo_m2) }}</div>
           <div class="text-muted small">USD / m²</div>
         </div>
       </div>
 
       <!-- Notas -->
-      <div class="card border-warning border-0 shadow-sm">
+      <div class="card border-0 shadow-sm">
         <div class="card-body small text-muted">
           <i class="bi bi-info-circle me-1 text-warning"></i>
-          <strong>Notas:</strong> Presupuesto referencial. No incluye: fundaciones, instalaciones
-          eléctricas/sanitarias, terminaciones de pisos, carpinterías ni honorarios profesionales.
-          El IVA y % de indirectos son ajustables en <code>app.py</code>.
+          <strong>No incluye:</strong> fundaciones, platea, instalaciones eléctricas y
+          sanitarias, pisos, carpinterías (ventanas/puertas), entrepiso, ni honorarios
+          profesionales (diseño + interventoría).
         </div>
       </div>
-    </div>
 
+    </div>
   </div>
 
-  <!-- Botones de acción -->
+  <!-- Botones -->
   <div class="row mt-4">
     <div class="col d-flex gap-3 flex-wrap">
       <a href="/" class="btn btn-primary">
