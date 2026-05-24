@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de Costos — Construcción en Seco & LSF</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-primary">
+  <div class="container">
+    <span class="navbar-brand fw-bold">
+      <i class="bi bi-building-gear me-2"></i>Calculadora — Construcción en Seco & LSF
+    </span>
+  </div>
+</nav>
+
+<div class="container py-5">
+
+  {% if error %}
+  <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+
+  <div class="row g-4">
+
+    <!-- Descripción de técnicas -->
+    <div class="col-lg-4">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title text-primary"><i class="bi bi-info-circle me-1"></i>Sobre las técnicas</h5>
+          <hr />
+          <h6><i class="bi bi-layers me-1"></i>Construcción en Seco</h6>
+          <p class="small text-muted">
+            Sistema basado en placas de yeso (drywall) sobre estructura metálica liviana.
+            Ideal para tabiques interiores, cielorrasos y revestimientos. Rápida ejecución
+            y buen comportamiento acústico/térmico con aislamiento.
+          </p>
+          <h6 class="mt-3"><i class="bi bi-grid-3x3 me-1"></i>Light Steel Framing (LSF)</h6>
+          <p class="small text-muted">
+            Estructura portante de perfiles de acero galvanizado de bajo espesor. Permite
+            construir viviendas completas. Alta precisión dimensional, resistencia sísmica
+            y excelente relación costo/durabilidad.
+          </p>
+          <div class="alert alert-warning small mt-3 mb-0">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            Los precios son referenciales. Actualiza los valores en <code>app.py → PRECIOS</code>
+            según tu región.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="bi bi-calculator me-2"></i>Parámetros del proyecto</h5>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="/calcular" id="formCalc">
+
+            <!-- Técnica -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Técnica constructiva</label>
+              <div class="d-flex gap-3">
+                <div class="form-check form-check-card flex-fill">
+                  <input class="form-check-input" type="radio" name="tecnica"
+                         id="t_seca" value="seca" checked onchange="toggleOpciones()" />
+                  <label class="form-check-label w-100 p-3 border rounded" for="t_seca">
+                    <i class="bi bi-layers fs-3 text-primary d-block mb-1"></i>
+                    <strong>Construcción en Seco</strong><br>
+                    <span class="small text-muted">Drywall / Placas de yeso</span>
+                  </label>
+                </div>
+                <div class="form-check form-check-card flex-fill">
+                  <input class="form-check-input" type="radio" name="tecnica"
+                         id="t_lsf" value="lsf" onchange="toggleOpciones()" />
+                  <label class="form-check-label w-100 p-3 border rounded" for="t_lsf">
+                    <i class="bi bi-grid-3x3 fs-3 text-success d-block mb-1"></i>
+                    <strong>Light Steel Framing</strong><br>
+                    <span class="small text-muted">Estructura de acero liviano</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Área y pisos -->
+            <div class="row g-3 mb-3">
+              <div class="col-sm-6">
+                <label for="area_m2" class="form-label fw-semibold">Superficie total (m²)</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="area_m2" name="area_m2"
+                         min="1" step="0.5" placeholder="Ej: 120" required />
+                  <span class="input-group-text">m²</span>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <label for="pisos" class="form-label fw-semibold">Número de pisos</label>
+                <input type="number" class="form-control" id="pisos" name="pisos"
+                       min="1" max="10" value="1" required />
+              </div>
+            </div>
+
+            <!-- Aislamiento -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">¿Incluir aislamiento térmico/acústico?</label>
+              <div class="d-flex gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="aislamiento"
+                         id="ais_si" value="si" checked />
+                  <label class="form-check-label" for="ais_si">Sí</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="aislamiento"
+                         id="ais_no" value="no" />
+                  <label class="form-check-label" for="ais_no">No</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Opciones Construcción Seca -->
+            <div id="opciones_seca" class="mb-3">
+              <label class="form-label fw-semibold">Tipo de placa de yeso</label>
+              <select class="form-select" name="tipo_placa">
+                <option value="simple">Simple (12.5 mm) — 1 capa</option>
+                <option value="doble">Doble — 2 capas (mayor aislación y resistencia)</option>
+              </select>
+            </div>
+
+            <!-- Opciones LSF -->
+            <div id="opciones_lsf" class="mb-3 d-none">
+              <label class="form-label fw-semibold">Revestimiento exterior</label>
+              <select class="form-select" name="revestimiento_ext">
+                <option value="cemento">Placa cementicia (mayor durabilidad exterior)</option>
+                <option value="osb">OSB (más económico)</option>
+              </select>
+            </div>
+
+            <div class="d-grid mt-4">
+              <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-calculator me-2"></i>Calcular presupuesto
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer class="bg-light border-top py-3 mt-4">
+  <div class="container text-center text-muted small">
+    Calculadora de costos constructivos — Valores referenciales en USD
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function toggleOpciones() {
+    const esLSF = document.getElementById("t_lsf").checked;
+    document.getElementById("opciones_seca").classList.toggle("d-none", esLSF);
+    document.getElementById("opciones_lsf").classList.toggle("d-none", !esLSF);
+  }
+</script>
+</body>
+</html>
